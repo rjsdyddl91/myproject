@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"></html>
+
+<head>
+    <!-- head.html의 head 태그를 포함시키는 코드 -->
+    <th:block th:replace="~{common/head :: commonHead}"></th:block>
+    <title>게시글 목록</title>
+</head>
+<body>
+        <div th:replace="~{common/header :: header}"></div>
+        <h1>게시글 목록</h1>
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>제목</th>
+                    <th>작성자</th>
+                    <th>등록일</th>
+                    <th>댓글 수</th>
+                    <th>첨부파일 수</th>
+                    <th>상세보기</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="board : ${boards.content}">
+                    <td th:text="${board.boardId}"></td>
+                    <td th:text="${board.title}"></td>
+                    <td th:text="${board.writer}"></td>
+                    <td th:text="${board.regDate}"></td>
+                    <td th:text="${board.commentCount}"></td>
+                    <td th:text="${board.attachCount}"></td>
+                    <td><a th:href="@{/board/detail(boardId=${board.boardId})}">보기</a></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div th:if="${boards.totalPages > 0}">
+            <!-- Page 클래스에 페이징 처리 정보가 저장되어 있음 
+            hasPrevious(), hasNext(), totalPage 등 번호 표현을
+            위한 기능들을 참조하여 사용 
+            -->
+            <ul style="list-style: none; display: flex; gap: 5px; padding: 0;">
+                <!-- 이전 페이지 이동 -->
+                <li th:if="${boards.hasPrevious()}">
+                    <a th:href="@{/board/list(page=${boards.number - 1})}">이전</a>
+                </li>
+
+                <!-- 페이지 번호 -->
+                 <li th:each="i : ${#numbers.sequence(0, boards.totalPages - 1)}">
+                    <a th:href="@{/board/list(page=${i})}" th:text="${i + 1}"></a>
+                    <!--
+                    @{/board/list} : /board/list 경로로 GET 이동
+                    (page=${i}) : request parameter "page" 이름으로 i 값을 전송
+                    -->
+                 </li>
+
+                <!-- 다음 페이지 이동-->
+                <li th:if="${boards.hasNext()}">
+                    <a th:href="@{/board/list(page=${boards.number + 1})}">다음</a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- hasRole('USER') : 권한 이름이 ROLE_USER인 경우만 접근 가능 -->
+        <a sec:authorize="hasRole('USER')" th:href="@{/board/register}">글쓰기</a>
+
+        <div th:replace="~{common/footer :: footer}"></div>
+
+</body>
+
+</html>

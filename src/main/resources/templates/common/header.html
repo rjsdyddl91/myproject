@@ -1,0 +1,32 @@
+<header>
+    <div class="header-container">
+        <a th:href="@{/board/list}">메인</a>
+        <div class="header-section">
+            <!-- Security Context : 인증 정보를 관리하는 객체 -->
+            <div sec:authorize="isAnonymous()"><!-- 익명(로그아웃 상태)인 경우 -->
+                <a th:href="@{/account/register}">회원가입</a>
+                <a th:href="@{/auth/login}">로그인</a>
+            </div>
+            <div sec:authorize="isAuthenticated()"><!-- 인증된 사용자(로그인 상태)인 경우 -->
+                <!-- logout post 처리는 Spring Security가 수행 -->
+                <form th:action="@{/auth/logout}" method="post">
+                    <span th:text="${#authentication.name}"></span><input type="submit" value="로그아웃">
+                </form>
+            </div>
+        </div>
+        <!--
+            *#authentication
+            - 로그인 성공 이후에 정보를 저장하는 SecurityContext 정보를
+            Thymeleaf에서 사용할 수 있도록 정보를 제공하는 객체
+            - ${#authentication.name} : 사용자 아이디(username)
+            - ${#authentication.authorities} : 권한 목록
+            - ${#authentication.principal} : UserDetails 객체
+            - UserDetails 객체에 Account 필드가 적용되어 있는 경우
+            - ${#authentication.principal.account.email}
+              : 사용자 이메일
+            - ${#authentication.principal.account.nickname}
+              : 사용자 닉네임
+        -->
+
+    </div>
+</header>

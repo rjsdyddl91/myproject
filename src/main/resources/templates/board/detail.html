@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html xmlns=th="http://www.thymeleaf.org">
+    <head>
+        <th:block th:replace="~{common/head :: commonHead}"></th:block>
+        <title>게시글 상세</title>
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    </head>
+    <body>
+        <div th:replace="~{common/header :: header}"></div>
+        <h1 th:text="${board.title}"></h1>
+        <p><strong>작성자:</strong><span th:text="${board.writer}"></span></p>
+        <p><strong>등록일:</strong><span th:text="${board.regDate}"></span></p>
+        <p><strong>내용:</strong></p>
+        <p th:text="${board.content}"></p>
+        <h3>첨부파일</h3>
+        <ul>
+            <!-- board 객체에 attachList가 저장되어 있음 -->
+            <li th:each="attach : ${board.attachList}">
+                <a th:href="@{/download/{fileChgName}/{fileRealName}
+                (fileChgName=${attach.fileChgName}, 
+                fileRealName=${attach.fileRealName})}" 
+                th:text="${attach.fileRealName}" download></a>
+            </li>
+        </ul>
+
+        <a th:href="@{/board/edit(boardId=${board.boardId})}">수정</a>
+        <form th:action="@{/board/delete(boardId=${board.boardId})}" method="POST">
+            <button type="submit">삭제</button>
+        </form>
+        <a th:href="@{/board/list}">목록</a>
+        <hr>
+        <div id="comment-section">
+            <h3>댓글</h3>
+
+            <!-- 댓글 입력 -->
+            <div sec:authorize="isAuthenticated">
+                <h4>댓글 작성</h4>
+                <p>작성자 : <span th:text="${#authentication.name}"></span></p>
+                <br>
+                <textarea id="comment-content" rows="3" cols="50"></textarea>
+                <br>
+                <button id="comment-submit">등록</button>
+            </div>
+            
+
+
+            <!-- 댓글 목록 -->
+            <ul id="comment-list">
+
+            </ul>
+        </div>
+        <div th:replace="~{common/footer :: footer}"></div>
+        <script th:inline="javascript">
+            // 게시글의 boardId 저장
+            const boardId = /*[[${board.boardId}]]*/ 0;
+            console.log(boardId);
+
+            // 댓글 등록
+            $('#comment-submit').click(function(){
+                const writer = /*[[${#authentication.name}]]*/ '';
+                const content = $('#comment-content').val().trim();
+
+                // 데이터 전송 전에 입력 데이터 검증
+                if(!writer || !content) {
+                    alert('작성자와 내용을 입력해주세요.');
+                    return;
+                }
+
+                $.ajax({
+                    type: 'POST',
+                    url: '/api/comments',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        writer: writer,
+                        content: content,
+                        boardId: boardId
+                    }),
+                    success: function() {
+                        alert('댓글 등록 완료');
+                        $('#comment-content').val('');
+                        loadComments(); // 댓글 다시 불러오기
+                    },
+                    error: function() {
+                        alert('댓글 등록 실패');
+                    } 
+                });
+            }); // 댓글 등록
+
+            // 댓글 목록 불러오기
+            function loadComments(){
+                $.get(`/api/comments/board/${boardId}`, function(comments){
+                    $('#comment-list').empty();
+
+                    if(comments.length === 0) {
+                        $('#comment-list').append('<li>등록된 댓글이 없습니다.</li>');
+                    } else {
+                        comments.forEach(comment => {
+                            $('#comment-list').append(
+                                `<li>
+                                    <string>${comment.writer}</string>: ${comment.content}
+                                    <button onclick="deleteComment(${comment.commentId})">삭제</button>    
+                                </li>`
+                            );
+                        });
+                    }
+                });
+            }
+
+            // 댓글 삭제
+            function deleteComment(commentId) {
+                if(!confirm('댓글을 삭제하시겠습니까?')) return;
+
+                $.ajax({
+                    type: 'DELETE',
+                    url: `/api/comments/${commentId}`,
+                    success: function () {
+                        alert('댓글 삭제 완료');
+                        loadComments();
+                    },
+                    error: function() {
+                        alert('댓글 삭제 실패');
+                    }
+                });
+            }
+            
+            // 페이지 로딩 시 댓글 목록 가져오기
+            $(document).ready(function(){
+                loadComments();
+            });
+        </script>
+    </body>
+</html>
